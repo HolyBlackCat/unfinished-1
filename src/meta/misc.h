@@ -15,6 +15,26 @@ namespace Meta
     template <typename ...P> overload(P...) -> overload<P...>;
 
 
+    // A wrapper that resets the underlying object to a specific value when moved from.
+    // The wrapper is copyable, the value is not changed on copy.
+
+    template <typename T, T V>
+    struct ResetIfMovedFrom
+    {
+        // This would have to be rewritten to work with C++20 classes as non-type template parameters.
+        static_assert(std::is_scalar_v<T>);
+
+        T value = V;
+        constexpr ResetIfMovedFrom() {}
+        constexpr ResetIfMovedFrom(T value) : value(value) {}
+
+        constexpr ResetIfMovedFrom(const ResetIfMovedFrom &) = default;
+        constexpr ResetIfMovedFrom(ResetIfMovedFrom &&other) noexcept : value(std::exchange(other.value, V)) {}
+        constexpr ResetIfMovedFrom &operator=(const ResetIfMovedFrom &) = default;
+        constexpr ResetIfMovedFrom &operator=(ResetIfMovedFrom &&other) noexcept {ResetIfMovedFrom tmp(std::move(other)); std::swap(tmp.value, value); return *this;}
+    };
+
+
     // Copy cv-qualifiers from one type to another.
 
     namespace impl
