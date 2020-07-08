@@ -1,5 +1,4 @@
 #include "game/main.h"
-#include "reflection/short_macros.h"
 
 namespace States
 {
@@ -7,14 +6,53 @@ namespace States
     {
         UNNAMED_MEMBERS()
 
-        float angle = 0;
+        entity_controller_t c;
+
+        Initial()
+        {
+            EntitiesConfig().ConfigureController(c);
+            for (const auto &ptr : ActionSequence<Actions::Init>{})
+                ptr->init(c);
+        }
 
         void Tick(const State::NextStateSelector &next_state) override
         {
-            (void)next_state;
+            { // Display action sequences in a debug GUI.
+                #ifndef NDEBUG
+                bool open = ImGui::Begin("Sequences");
+                FINALLY( ImGui::End(); )
+                if (open)
+                {
+                    if (ImGui::CollapsingHeader("Init"))
+                    {
+                        for (const auto &ptr : ActionSequence<Actions::Init>{})
+                        {
+                            ImGui::Bullet();
+                            ImGui::TextUnformatted(Refl::Polymorphic::Name(ptr));
+                        }
+                    }
+                    if (ImGui::CollapsingHeader("Tick"))
+                    {
+                        for (const auto &ptr : ActionSequence<Actions::Tick>{})
+                        {
+                            ImGui::Bullet();
+                            ImGui::TextUnformatted(Refl::Polymorphic::Name(ptr));
+                        }
+                    }
+                    if (ImGui::CollapsingHeader("Render"))
+                    {
+                        for (const auto &ptr : ActionSequence<Actions::Render>{})
+                        {
+                            ImGui::Bullet();
+                            ImGui::TextUnformatted(Refl::Polymorphic::Name(ptr));
+                        }
+                    }
+                }
+                #endif
+            }
 
-            angle += 0.01;
-            ImGui::ShowDemoWindow();
+            for (const auto &ptr : ActionSequence<Actions::Tick>{})
+                ptr->tick(c, next_state);
         }
 
         void Render() const override
@@ -24,7 +62,8 @@ namespace States
 
             r.BindShader();
 
-            r.iquad(mouse.pos(), ivec2(32)).center().rotate(angle).color(mouse.left.down() ? fvec3(1,0.5,0) : fvec3(0,0.5,1));
+            for (const auto &ptr : ActionSequence<Actions::Render>{})
+                ptr->render(c);
 
             r.Finish();
         }

@@ -47,6 +47,15 @@ Render r = adjust_(Render(0x2000, shader_config), SetTexture(texture_main), SetM
 
 Input::Mouse mouse;
 
+Ent::ControllerConfig &EntitiesConfig()
+{
+    static Ent::ControllerConfig ret;
+    return ret;
+}
+
+Random rng;
+
+
 struct ProgramState : Program::DefaultBasicState
 {
     State::StateManager state_manager;
