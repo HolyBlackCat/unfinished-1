@@ -10,6 +10,15 @@ namespace Components
         fvec3 color{};
         float distance = 1;
 
+        float last_move = 0;
+
+
+        void RandomizePos(int m)
+        {
+            pos[m] = float(-screen_size[m]/2 <= rng.real() <= screen_size[m]/2);
+        }
+
+
         void RandomizeStyle()
         {
             constexpr float min_dist = 10, max_dist = 50, min_temp = 1000, max_temp = 10000;
@@ -70,21 +79,46 @@ namespace Components
 
             color = TemperatureToColor(min_temp <= rng.real() <= max_temp) * t;
         }
-        void RandomizePos(int m)
+
+        void RandomizeStyle_Dust()
         {
-            pos[m] = float(-screen_size[m]/2 <= rng.real() <= screen_size[m]/2);
+            constexpr float min_dist = 1, max_dist = 7;
+
+            distance = float(min_dist <= rng.real() <= max_dist);
+            float t = 1 / ipow(distance, 2) / (1 / ipow(min_dist, 2));
+            t *= 0.4;
+            t *= float(0.8 <= rng.real() <= 1.2);
+            clamp_var(t, 0.02, 1);
+
+            color = fvec3(t);
         }
 
-        BackgroundStar()
+
+        enum class Style {regular, dust};
+
+        BackgroundStar(Style style)
         {
-            RandomizeStyle();
+            switch (style)
+            {
+              case Style::regular:
+                RandomizeStyle();
+                break;
+              case Style::dust:
+                RandomizeStyle_Dust();
+                break;
+            }
+
             RandomizePos(0);
             RandomizePos(1);
         }
 
-        void Move(fvec2 offset)
+        // Don't call more than once per tick.
+        void Move(float offset_y)
         {
-            pos += offset / distance;
+            offset_y /= distance;
+
+            pos.y += offset_y;
+            last_move = offset_y;
 
             for (int m = 0; m < 2; m++)
             {
@@ -98,7 +132,13 @@ namespace Components
 
         void Render()
         {
-            r.fquad(pos, fvec2(1)).center().color(color).beta(0);
+            float extra_len = abs(last_move) - 1;
+            if (extra_len <= 0)
+                extra_len = 0;
+            else
+                extra_len = pow(extra_len, 1.3) * 2;
+
+            r.fquad(pos, fvec2(1, 1 + extra_len)).center().color(color).beta(0);
         }
     };
 }
