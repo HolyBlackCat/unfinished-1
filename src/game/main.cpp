@@ -53,7 +53,7 @@ Ent::ControllerConfig &EntitiesConfig()
     return ret;
 }
 
-Random rng;
+Random rng(std::time(nullptr));
 
 
 struct ProgramState : Program::DefaultBasicState

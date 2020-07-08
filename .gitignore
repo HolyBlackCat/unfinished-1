@@ -6,6 +6,7 @@ bin/imgui.ini
 bin/*.dll
 bin/*.so
 bin/*.so.*
+bin/assets/atlas.*
 obj/**
 *.tar.gz
 *.zip
